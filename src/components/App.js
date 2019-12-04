@@ -1,63 +1,78 @@
 import React, { useState, useEffect } from 'react'
 import '../App.css'
-import Header from './Header'
-import Movie from './Movie'
+import Article from './Article'
 import Search from './Search'
 
 const API_KEY = process.env.REACT_APP_API_KEY
-const MOVIE_API_URL = `https://www.omdbapi.com/?s=man&apikey=${API_KEY}`
+const perPage = 10
 
 const App = () => {
   const [loading, setLoading] = useState(true)
-  const [movies, setMovies] = useState([])
+  const [articles, setArticles] = useState([])
   const [errorMessage, setErrorMessage] = useState(null)
 
   useEffect(() => {
-    fetch(MOVIE_API_URL)
-      .then(response => response.json())
-      .then(jsonResponse => {
-        setMovies(jsonResponse.Search)
-        setLoading(false)
-      })
+    (async () => {
+      const params = new URLSearchParams()
+      params.set('page', 1)
+      params.set('per_page', perPage)
+      try {
+        const response = await fetch(`https://qiita.com/api/v2/items?${params.toString()}`, {
+          headers: {
+            'Authorization': `Bearer ${API_KEY}`
+          }
+        })
+        setArticles(await response.json())
+      } catch (err) {
+        setErrorMessage(err)
+      }
+
+      setLoading(false)
+    })()
   }, [])
 
-    const search = searchValue => {
+  const search = async (searchValue) => {
     setLoading(true)
-    setErrorMessage(null)
-
-    fetch(`https://www.omdbapi.com/?s=${searchValue}&apikey=${API_KEY}`)
-      .then(response => response.json())
-      .then(jsonResponse => {
-        if (jsonResponse.Response === 'True') {
-          setMovies(jsonResponse.Search)
-          setLoading(false)
-        } else {
-          setErrorMessage(jsonResponse.Error)
-          setLoading(false)
+    const params = new URLSearchParams()
+    params.set('page', 1)
+    params.set('per_page', perPage)
+    params.set('query', `title:${searchValue}`)
+    try {
+      const response = await fetch(`https://qiita.com/api/v2/items?${params.toString()}`, {
+        headers: {
+          'Authorization': `Bearer ${API_KEY}`
         }
       })
-  	}
+      setArticles(await response.json())
+      setErrorMessage('')
+    } catch (err) {
+      setErrorMessage(err)
+    }
 
-    
-    return (
-     <div className='App'>
-      <Header text='HOOKED' />
+    setLoading(false)
+  }
+
+  const render = () => {
+    if (loading) {
+      return <span>loading...</span>
+    }
+    if (errorMessage) {
+      return <span className="caution">{errorMessage}</span>
+    }
+    return articles.map((article, i) => 
+      <Article key={i} article={article} />
+    )
+  }
+
+  return (
+    <div className='App'>
       <Search search={search} />
-      <p className='App-intro'>Sharing a few of our favourite movies</p>
-      <div className='movies'>
-        {loading && !errorMessage ? (
-         <span>loading...</span>
-         ) : errorMessage ? (
-          <div className='errorMessage'>{errorMessage}</div>
-        ) : (
-          movies.map((movie, index) => (
-            <Movie key={`${index}-${movie.Title}`} movie={movie} />
-          ))
-        )}
+      <p>Qiita の記事を取得します。</p>
+      <div className='articles'>
+        {render()}
       </div>
     </div>
   )
 }
-
 
 export default App

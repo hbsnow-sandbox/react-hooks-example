@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
 
-
 const Search = (props) => {
   const [searchValue, setSearchValue] = useState('')
   
@@ -19,15 +18,15 @@ const Search = (props) => {
   }
 
   return (
-      <form className='search'>
-        <input
-          value={searchValue}
-          onChange={handleSearchInputChanges}
-          type='text'
-        />
-        <input onClick={callSearchFunction} type='submit' value='SEARCH' />
-      </form>
-    )
+    <form className='search'>
+      <input
+        value={searchValue}
+        onChange={handleSearchInputChanges}
+        type='text'
+      />
+      <button onClick={callSearchFunction} type='submit'>SEARCH</button>
+    </form>
+  )
 }
 
 export default Search
